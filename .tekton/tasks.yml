@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cleanup-task
+spec:
+  steps:
+    - name: cleanup
+      image: alpine/git
+      script: |
+        #!/bin/sh
+        echo "Running cleanup task..."
+        echo "Cleanup complete."
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: nose-test-task
+spec:
+  params:
+    - name: source-url
+      description: The URL of the git repository
+      type: string
+    - name: source-revision
+      description: The git revision (branch, tag, or commit SHA)
+      type: string
+  steps:
+    - name: fetch-code
+      image: alpine/git
+      script: |
+        #!/bin/sh
+        git clone $(params.source-url) .
+        git checkout $(params.source-revision)
+    - name: run-nose-tests
+      image: python:3.9-slim-buster
+      script: |
+        #!/usr/bin/env python
+        pip install nose
+        nosetests your_tests.py
